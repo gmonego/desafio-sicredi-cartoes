@@ -1,0 +1,183 @@
+config_version: "1.0.0"
+
+projeto:
+  nome: pipeline_cartoes_novarota
+  timezone: UTC
+
+camadas:
+  - landing
+  - bronze
+  - silver
+  - gold
+  - quarantine
+
+entidades:
+
+  # Defeitos plantados: duplicatas com data_atualizacao diferente, CPF inválido
+  clientes:
+    arquivo: clientes.csv
+    particionado_por_data: false
+    chave_negocio: [id_cliente]
+    coluna_versao: data_atualizacao
+    tipos:
+      id_cliente: string
+      nome: string
+      cpf: string
+      data_nascimento: date
+      cidade: string
+      estado: string
+      data_atualizacao: timestamp
+    regras_qualidade:
+      - nome: id_cliente_nao_nulo
+        expressao: "id_cliente IS NOT NULL AND trim(id_cliente) <> ''"
+        severidade: critica
+      - nome: cpf_formato_valido
+        expressao: "cpf IS NOT NULL AND cpf RLIKE '^[0-9]{11}$'"
+        severidade: critica
+      - nome: cpf_digito_verificador_valido
+        expressao: "cpf_valido(cpf)"
+        severidade: critica
+      - nome: estado_uf_valida
+        expressao: "estado RLIKE '^[A-Z]{2}$'"
+        severidade: alerta
+      - nome: data_nascimento_plausivel
+        expressao: "data_nascimento IS NULL OR data_nascimento < current_date()"
+        severidade: alerta
+
+  # Defeitos plantados: conta sem cliente, status inconsistente
+  contas:
+    arquivo: contas.csv
+    particionado_por_data: false
+    chave_negocio: [id_conta]
+    coluna_versao: data_abertura
+    tipos:
+      id_conta: string
+      id_cliente: string
+      tipo_conta: string
+      status_conta: string
+      data_abertura: date
+    regras_qualidade:
+      - nome: id_conta_nao_nulo
+        expressao: "id_conta IS NOT NULL AND trim(id_conta) <> ''"
+        severidade: critica
+      - nome: id_cliente_informado
+        expressao: "id_cliente IS NOT NULL AND trim(id_cliente) <> ''"
+        severidade: critica
+      - nome: status_conta_valido
+        expressao: "upper(status_conta) IN ('ATIVA','INATIVA','BLOQUEADA','ENCERRADA')"
+        severidade: critica
+    integridade_referencial:
+      - coluna: id_cliente
+        referencia: clientes
+        coluna_referencia: id_cliente
+
+  # Defeitos plantados: cartões cancelados, cartões sem conta válida
+  cartoes:
+    arquivo: cartoes.csv
+    particionado_por_data: false
+    chave_negocio: [id_cartao]
+    coluna_versao: data_atualizacao
+    tipos:
+      id_cartao: string
+      id_conta: string
+      bandeira: string
+      tipo_cartao: string
+      status_cartao: string
+      data_emissao: date
+      data_atualizacao: timestamp
+    regras_qualidade:
+      - nome: id_cartao_nao_nulo
+        expressao: "id_cartao IS NOT NULL AND trim(id_cartao) <> ''"
+        severidade: critica
+      - nome: id_conta_informado
+        expressao: "id_conta IS NOT NULL AND trim(id_conta) <> ''"
+        severidade: critica
+      - nome: status_cartao_valido
+        expressao: "upper(status_cartao) IN ('ATIVO','CANCELADO','BLOQUEADO')"
+        severidade: critica
+      - nome: bandeira_valida
+        expressao: "upper(bandeira) IN ('VISA','MASTERCARD','ELO','AMEX')"
+        severidade: alerta
+    integridade_referencial:
+      - coluna: id_conta
+        referencia: contas
+        coluna_referencia: id_conta
+
+  # Única entidade com arquivo por data de referência.
+  # Defeitos plantados: duplicadas, valor negativo, data inválida, atrasadas
+  transacoes:
+    arquivo_padrao: "transacoes_cartao_*.csv"
+    particionado_por_data: true
+    chave_negocio: [id_transacao]
+    coluna_versao: data_transacao
+    particionamento_destino: [data_referencia]
+    tipos:
+      id_transacao: string
+      id_cartao: string
+      data_transacao: timestamp
+      valor: "decimal(18,2)"
+      nome_estabelecimento: string
+      mcc: string
+      cidade_estabelecimento: string
+    regras_qualidade:
+      - nome: id_transacao_nao_nulo
+        expressao: "id_transacao IS NOT NULL AND trim(id_transacao) <> ''"
+        severidade: critica
+      - nome: id_cartao_informado
+        expressao: "id_cartao IS NOT NULL AND trim(id_cartao) <> ''"
+        severidade: critica
+      - nome: valor_positivo
+        expressao: "valor IS NOT NULL AND valor > 0"
+        severidade: critica
+      - nome: data_transacao_valida
+        expressao: "data_transacao IS NOT NULL AND data_transacao <= current_timestamp()"
+        severidade: critica
+      - nome: mcc_formato_valido
+        expressao: "mcc RLIKE '^[0-9]{4}$'"
+        severidade: alerta
+    integridade_referencial:
+      - coluna: id_cartao
+        referencia: cartoes
+        coluna_referencia: id_cartao
+
+  # Defeitos plantados: estornos apontando para transação inexistente
+  estornos:
+    arquivo: estornos.csv
+    particionado_por_data: false
+    chave_negocio: [id_estorno]
+    coluna_versao: data_estorno
+    tipos:
+      id_estorno: string
+      id_transacao: string
+      data_estorno: timestamp
+      motivo_estorno: string
+    regras_qualidade:
+      - nome: id_estorno_nao_nulo
+        expressao: "id_estorno IS NOT NULL AND trim(id_estorno) <> ''"
+        severidade: critica
+      - nome: id_transacao_informado
+        expressao: "id_transacao IS NOT NULL AND trim(id_transacao) <> ''"
+        severidade: critica
+    integridade_referencial:
+      - coluna: id_transacao
+        referencia: transacoes
+        coluna_referencia: id_transacao
+
+ingestao:
+  formato_origem: csv
+  opcoes_leitura:
+    header: "true"
+    sep: ","
+    encoding: "UTF-8"
+    # PERMISSIVE: linha malformada não aborta a leitura.
+    mode: PERMISSIVE
+  colunas_metadados:
+    arquivo_origem: arquivo_origem
+    data_referencia: data_referencia
+    timestamp_ingestao: timestamp_ingestao
+    hash_linha: hash_linha
+    config_version: config_version
+
+gold:
+  limiar_crescimento_mensal: 0.50
+  quantidade_quartis: 4
