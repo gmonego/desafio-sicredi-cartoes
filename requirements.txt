@@ -1,0 +1,4 @@
+# Dependencias comuns aos dois ambientes (local e Databricks).
+pytest==8.3.3
+chispa==0.10.1
+PyYAML==6.0.2

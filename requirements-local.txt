@@ -1,0 +1,6 @@
+# Dependencias para execucao local.
+# Herda o conjunto comum e acrescenta o que o Databricks ja fornece.
+-r requirements.txt
+
+pyspark==3.5.3
+delta-spark==3.2.1
