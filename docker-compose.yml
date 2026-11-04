@@ -1,0 +1,28 @@
+services:
+
+  tests:
+    build: .
+    image: pipeline-cartoes-novarota:local
+    volumes:
+      - .:/app
+      - pip-cache:/root/.cache/pip
+      - /app/.venv
+    environment:
+      PIPELINE_ENV: local
+      PIPELINE_DATA_ROOT: /app/data
+    command: ["pytest"]
+
+  pipeline:
+    build: .
+    image: pipeline-cartoes-novarota:local
+    volumes:
+      - .:/app
+      - pip-cache:/root/.cache/pip
+      - /app/.venv
+    environment:
+      PIPELINE_ENV: local
+      PIPELINE_DATA_ROOT: /app/data
+    command: ["python", "-m", "scripts.gerar_massa"]
+
+volumes:
+  pip-cache:
