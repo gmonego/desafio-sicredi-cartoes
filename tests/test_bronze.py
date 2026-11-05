@@ -35,7 +35,7 @@ def landing(tmp_path_factory):
 
 @pytest.fixture
 def bronze(monkeypatch, tmp_path, landing):
-    """Aponta a raiz de dados para um diretorio temporario."""
+    """Aponta a raíz de dados para um diretório temporário."""
     monkeypatch.setenv("PIPELINE_DATA_ROOT", str(tmp_path))
     return tmp_path
 
@@ -84,7 +84,6 @@ def test_le_todas_as_colunas_como_string(spark, landing):
 
 
 def test_leitura_preserva_a_contagem_do_arquivo(spark, landing):
-    """A bronze nao filtra nada: toda linha do CSV precisa chegar."""
     import csv
 
     arquivo = listar_arquivos("clientes", landing)[0]
@@ -146,8 +145,6 @@ def test_linhas_diferentes_tem_hash_diferente(spark, landing):
         ler_csv_como_texto(arquivo, colunas), arquivo.name, "2026-10-01", colunas
     )
 
-    # Clientes duplicados tem a chave repetida mas conteudo distinto, entao o
-    # numero de hashes unicos iguala o de linhas.
     assert df.select("hash_linha").distinct().count() == df.count()
 
 
@@ -163,19 +160,24 @@ def test_ingere_cadastro_e_le_de_volta(spark, bronze, landing):
     assert df.count() > DEFEITOS["clientes_duplicados"]
 
 
-def test_ingere_transacoes_dos_tres_dias(spark, bronze, landing):
+def test_ingere_transacoes_de_todas_as_cargas(spark, bronze, landing):
+    from scripts.gerar_massa import DATAS_CARGA
+
     ingerir_entidade("transacoes", landing)
 
     df = spark.read.format("delta").load(str(bronze / "bronze" / "transacoes"))
-    datas = {linha["data_referencia"] for linha in df.select("data_referencia").collect()}
+    datas = {
+        linha["data_referencia"]
+        for linha in df.select("data_referencia").collect()
+    }
 
-    assert len(datas) == DIAS
-    assert datas == {"2026-10-01", "2026-10-02", "2026-10-03"}
+    esperadas = {data.strftime("%Y-%m-%d") for data in DATAS_CARGA}
+    assert datas == esperadas
 
 
 def test_transacao_atrasada_fica_na_particao_do_arquivo(spark, bronze, landing):
     """Uma transação ocorrida no dia anterior fica na partição do arquivo em
-    que chegou, e nao na do dia em que ocorreu.
+    que chegou, e não na do dia em que ocorreu.
     """
     ingerir_entidade("transacoes", landing)
     df = spark.read.format("delta").load(str(bronze / "bronze" / "transacoes"))
@@ -192,8 +194,7 @@ def test_transacao_atrasada_fica_na_particao_do_arquivo(spark, bronze, landing):
 # ---------------------------------------------------------------------------
 
 def test_reprocessar_nao_duplica(spark, bronze, landing):
-    """Ingerir duas vezes produz o mesmo resultado, replaceWhere substitui a
-    particao em vez de acrescentar."""
+    """Ingerir duas vezes produz o mesmo resultado."""
     ingerir_entidade("transacoes", landing)
     caminho = str(bronze / "bronze" / "transacoes")
     primeira = spark.read.format("delta").load(caminho).count()
@@ -204,11 +205,11 @@ def test_reprocessar_nao_duplica(spark, bronze, landing):
     assert primeira == segunda
 
 
-def test_reprocessar_um_dia_nao_afeta_os_outros(spark, bronze, landing):
-    """O predicado filtra por data_referencia, então as demais partições não
-    são tocadas, inclusive as transações atrasadas que moram nelas."""
+def test_reprocessar_uma_carga_nao_afeta_as_outras(spark, bronze, landing):
+    """O predicado filtra por data_referencia, então as demais partições não são tocadas."""
     from src.ingestion.bronze import (
         adicionar_metadados as add_meta,
+        extrair_data_referencia,
         gravar,
         ler_csv_como_texto as ler,
     )
@@ -226,15 +227,14 @@ def test_reprocessar_um_dia_nao_afeta_os_outros(spark, bronze, landing):
 
     antes = contagens()
 
-    # Reprocessa apenas o arquivo do dia do meio.
+    # Reprocessa apenas a carga do meio.
     colunas = list(get_entidade("transacoes")["tipos"])
     arquivo = listar_arquivos("transacoes", landing)[1]
-    df = add_meta(ler(arquivo, colunas), arquivo.name, "2026-10-02", colunas)
-    gravar(df, "transacoes", "2026-10-02")
+    data_referencia = extrair_data_referencia(arquivo.name)
+    df = add_meta(ler(arquivo, colunas), arquivo.name, data_referencia, colunas)
+    gravar(df, "transacoes", data_referencia)
 
-    depois = contagens()
-
-    assert antes == depois, "o reprocessamento alterou particoes que nao deveria"
+    assert antes == contagens(), "o reprocessamento alterou particoes alheias"
 
 
 def test_ingestao_grava_a_versao_da_configuracao(spark, bronze, landing):
