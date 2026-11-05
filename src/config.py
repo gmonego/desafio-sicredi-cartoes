@@ -1,4 +1,8 @@
-"""Configuração central do pipeline."""
+"""Configuracao central do pipeline.
+
+Único módulo que conhece caminhos físicos, constroi a SparkSession e lê o
+arquivo de configuração.
+"""
 
 import os
 from functools import lru_cache
@@ -10,17 +14,20 @@ from pyspark.sql import SparkSession
 CONF_PATH = "conf/pipeline.yml"
 SEVERIDADES = ("critica", "alerta")
 
+# PySpark 3.5 roda em Python 3.8 a 3.11. Da versão 3.12 em diante a
+# comunicação com os workers quebra (EOFException), de forma consistente
+# no Windows.
 PYTHON_MIN = (3, 8)
 PYTHON_MAX = (3, 11)
 
 
 def _raiz_repo() -> Path:
-    """Raiz do repositório a partir da posição deste arquivo."""
+    """Raiz do repositório à partir da posição deste arquivo."""
     return Path(__file__).resolve().parent.parent
 
 
 # ---------------------------------------------------------------------------
-# Configuração declarativa
+# Configuracao declarativa
 # ---------------------------------------------------------------------------
 
 @lru_cache(maxsize=1)
@@ -97,8 +104,10 @@ def get_data_root() -> str:
     override = os.environ.get("PIPELINE_DATA_ROOT")
     if override:
         return override
+
     if get_env() == "databricks":
-        return "/tmp/novarota"
+        return "/dbfs/tmp/novarota"
+
     return str(_raiz_repo() / "data")
 
 
@@ -110,7 +119,7 @@ def resolve_target(camada: str, tabela: str) -> str:
 
 
 def resolve_source(arquivo: str) -> str:
-    """Caminho de um arquivo de entrada na landing."""
+    """Caminho de um arquivo de entrada na camada landing."""
     return f"{get_data_root()}/landing/{arquivo}"
 
 
@@ -131,10 +140,21 @@ def _checar_python() -> None:
         )
 
 
+def _ajustar_sessao(spark) -> None:
+    """Aplica as configuracoes que valem nos dois ambientes."""
+    conf = load_conf()
+
+    try:
+        spark.conf.set("spark.sql.session.timeZone", conf["projeto"]["timezone"])
+    except Exception:
+        pass
+
+
 def get_spark() -> SparkSession:
     """Devolve a SparkSession do ambiente."""
     sessao = SparkSession.getActiveSession()
     if sessao is not None:
+        _ajustar_sessao(sessao)
         return sessao
 
     _checar_python()
@@ -155,5 +175,10 @@ def get_spark() -> SparkSession:
     )
 
     spark = configure_spark_with_delta_pip(builder).getOrCreate()
-    spark.sparkContext.setLogLevel("ERROR")
+
+    try:
+        spark.sparkContext.setLogLevel("ERROR")
+    except Exception:
+        pass
+
     return spark
