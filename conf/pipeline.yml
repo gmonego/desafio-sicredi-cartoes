@@ -28,19 +28,19 @@ entidades:
       estado: string
       data_atualizacao: timestamp
     regras_qualidade:
-      - nome: id_cliente_nao_nulo
+      - nome: id_cliente_ausente
         expressao: "id_cliente IS NOT NULL AND trim(id_cliente) <> ''"
         severidade: critica
-      - nome: cpf_formato_valido
+      - nome: cpf_formato_invalido
         expressao: "cpf IS NOT NULL AND cpf RLIKE '^[0-9]{11}$'"
         severidade: critica
-      - nome: cpf_digito_verificador_valido
+      - nome: cpf_digito_verificador_invalido
         expressao: "cpf_valido(cpf)"
         severidade: critica
-      - nome: estado_uf_valida
+      - nome: estado_uf_invalida
         expressao: "estado RLIKE '^[A-Z]{2}$'"
         severidade: alerta
-      - nome: data_nascimento_plausivel
+      - nome: data_nascimento_futura
         expressao: "data_nascimento IS NULL OR data_nascimento < current_date()"
         severidade: alerta
 
@@ -60,10 +60,10 @@ entidades:
       - nome: id_conta_nao_nulo
         expressao: "id_conta IS NOT NULL AND trim(id_conta) <> ''"
         severidade: critica
-      - nome: id_cliente_informado
+      - nome: id_cliente_ausente
         expressao: "id_cliente IS NOT NULL AND trim(id_cliente) <> ''"
         severidade: critica
-      - nome: status_conta_valido
+      - nome: status_conta_fora_do_dominio
         expressao: "upper(status_conta) IN ('ATIVA','INATIVA','BLOQUEADA','ENCERRADA')"
         severidade: critica
     integridade_referencial:
@@ -86,16 +86,16 @@ entidades:
       data_emissao: date
       data_atualizacao: timestamp
     regras_qualidade:
-      - nome: id_cartao_nao_nulo
+      - nome: id_cartao_ausente
         expressao: "id_cartao IS NOT NULL AND trim(id_cartao) <> ''"
         severidade: critica
-      - nome: id_conta_informado
+      - nome: id_conta_ausente
         expressao: "id_conta IS NOT NULL AND trim(id_conta) <> ''"
         severidade: critica
-      - nome: status_cartao_valido
+      - nome: status_cartao_fora_do_dominio
         expressao: "upper(status_cartao) IN ('ATIVO','CANCELADO','BLOQUEADO')"
         severidade: critica
-      - nome: bandeira_valida
+      - nome: bandeira_fora_do_dominio
         expressao: "upper(bandeira) IN ('VISA','MASTERCARD','ELO','AMEX')"
         severidade: alerta
     integridade_referencial:
@@ -120,19 +120,19 @@ entidades:
       mcc: string
       cidade_estabelecimento: string
     regras_qualidade:
-      - nome: id_transacao_nao_nulo
+      - nome: id_transacao_ausente
         expressao: "id_transacao IS NOT NULL AND trim(id_transacao) <> ''"
         severidade: critica
-      - nome: id_cartao_informado
+      - nome: id_cartao_ausente
         expressao: "id_cartao IS NOT NULL AND trim(id_cartao) <> ''"
         severidade: critica
-      - nome: valor_positivo
+      - nome: valor_nao_positivo
         expressao: "valor IS NOT NULL AND valor > 0"
         severidade: critica
-      - nome: data_transacao_valida
+      - nome: data_transacao_futura
         expressao: "data_transacao IS NOT NULL AND data_transacao <= current_timestamp()"
         severidade: critica
-      - nome: mcc_formato_valido
+      - nome: mcc_formato_invalido
         expressao: "mcc RLIKE '^[0-9]{4}$'"
         severidade: alerta
     integridade_referencial:
@@ -152,10 +152,10 @@ entidades:
       data_estorno: timestamp
       motivo_estorno: string
     regras_qualidade:
-      - nome: id_estorno_nao_nulo
+      - nome: id_estorno_ausente
         expressao: "id_estorno IS NOT NULL AND trim(id_estorno) <> ''"
         severidade: critica
-      - nome: id_transacao_informado
+      - nome: id_transacao_ausente
         expressao: "id_transacao IS NOT NULL AND trim(id_transacao) <> ''"
         severidade: critica
     integridade_referencial:

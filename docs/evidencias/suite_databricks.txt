@@ -1,0 +1,126 @@
+[1m============================= test session starts ==============================[0m
+platform linux -- Python 3.11.11, pytest-8.3.3, pluggy-1.7.0 -- /local_disk0/.ephemeral_nfs/envs/pythonEnv-b7a97111-5be6-4b8d-899c-f83bb0775228/bin/python
+rootdir: /Workspace/Users/monego.giovani@outlook.com/desafio-sicredi-cartoes
+configfile: pytest.ini
+[1mcollecting ... [0mcollected 110 items
+
+tests/test_bronze.py::test_extrai_data_do_nome_do_arquivo [32mPASSED[0m[32m         [  0%][0m
+tests/test_bronze.py::test_nome_sem_data_levanta_erro [32mPASSED[0m[32m             [  1%][0m
+tests/test_bronze.py::test_entidade_de_cadastro_tem_um_arquivo [32mPASSED[0m[32m    [  2%][0m
+tests/test_bronze.py::test_entidade_particionada_tem_um_arquivo_por_dia [32mPASSED[0m[32m [  3%][0m
+tests/test_bronze.py::test_arquivo_inexistente_levanta_erro [32mPASSED[0m[32m       [  4%][0m
+tests/test_bronze.py::test_le_todas_as_colunas_como_string [32mPASSED[0m[32m        [  5%][0m
+tests/test_bronze.py::test_leitura_preserva_a_contagem_do_arquivo [32mPASSED[0m[32m [  6%][0m
+tests/test_bronze.py::test_metadados_sao_adicionados [32mPASSED[0m[32m              [  7%][0m
+tests/test_bronze.py::test_nenhum_metadado_vem_nulo [32mPASSED[0m[32m               [  8%][0m
+tests/test_bronze.py::test_hash_e_estavel_entre_execucoes [32mPASSED[0m[32m         [  9%][0m
+tests/test_bronze.py::test_linhas_diferentes_tem_hash_diferente [32mPASSED[0m[32m   [ 10%][0m
+tests/test_bronze.py::test_ingere_cadastro_e_le_de_volta [32mPASSED[0m[32m          [ 10%][0m
+tests/test_bronze.py::test_ingere_transacoes_de_todas_as_cargas [32mPASSED[0m[32m   [ 11%][0m
+tests/test_bronze.py::test_transacao_atrasada_fica_na_particao_do_arquivo [32mPASSED[0m[32m [ 12%][0m
+tests/test_bronze.py::test_reprocessar_nao_duplica [32mPASSED[0m[32m                [ 13%][0m
+tests/test_bronze.py::test_reprocessar_uma_carga_nao_afeta_as_outras [32mPASSED[0m[32m [ 14%][0m
+tests/test_bronze.py::test_ingestao_grava_a_versao_da_configuracao [32mPASSED[0m[32m [ 15%][0m
+tests/test_config.py::test_configuracao_carrega_com_versao_declarada [32mPASSED[0m[32m [ 16%][0m
+tests/test_config.py::test_camadas_essenciais_declaradas [32mPASSED[0m[32m          [ 17%][0m
+tests/test_config.py::test_toda_entidade_tem_chave_de_negocio_e_tipos [32mPASSED[0m[32m [ 18%][0m
+tests/test_config.py::test_chave_de_negocio_existe_entre_os_tipos_declarados [32mPASSED[0m[32m [ 19%][0m
+tests/test_config.py::test_coluna_versao_existe_entre_os_tipos_declarados [32mPASSED[0m[32m [ 20%][0m
+tests/test_config.py::test_regras_de_qualidade_tem_campos_obrigatorios [32mPASSED[0m[32m [ 20%][0m
+tests/test_config.py::test_nomes_de_regra_sao_unicos_na_entidade [32mPASSED[0m[32m  [ 21%][0m
+tests/test_config.py::test_toda_entidade_tem_ao_menos_uma_regra_critica [32mPASSED[0m[32m [ 22%][0m
+tests/test_config.py::test_integridade_referencial_aponta_para_entidade_e_coluna_existentes [32mPASSED[0m[32m [ 23%][0m
+tests/test_config.py::test_entidade_inexistente_levanta_erro_descritivo [32mPASSED[0m[32m [ 24%][0m
+tests/test_config.py::test_resolve_target_usa_as_camadas_da_configuracao [32mPASSED[0m[32m [ 25%][0m
+tests/test_gerador_massa.py::test_massa_e_sempre_igual [32mPASSED[0m[32m            [ 26%][0m
+tests/test_gerador_massa.py::test_gera_todos_os_arquivos [32mPASSED[0m[32m          [ 27%][0m
+tests/test_gerador_massa.py::test_dias_tem_volumes_diferentes [32mPASSED[0m[32m     [ 28%][0m
+tests/test_gerador_massa.py::test_clientes_duplicados [32mPASSED[0m[32m             [ 29%][0m
+tests/test_gerador_massa.py::test_duplicatas_tem_datas_diferentes [32mPASSED[0m[32m [ 30%][0m
+tests/test_gerador_massa.py::test_cpfs_invalidos [32mPASSED[0m[32m                  [ 30%][0m
+tests/test_gerador_massa.py::test_nenhum_cpf_invalido_por_acidente [32mPASSED[0m[32m [ 31%][0m
+tests/test_gerador_massa.py::test_contas_orfas [32mPASSED[0m[32m                    [ 32%][0m
+tests/test_gerador_massa.py::test_cartoes_orfaos [32mPASSED[0m[32m                  [ 33%][0m
+tests/test_gerador_massa.py::test_transacoes_duplicadas [32mPASSED[0m[32m           [ 34%][0m
+tests/test_gerador_massa.py::test_valores_negativos [32mPASSED[0m[32m               [ 35%][0m
+tests/test_gerador_massa.py::test_transacoes_atrasadas_em_todos_os_dias [32mPASSED[0m[32m [ 36%][0m
+tests/test_gerador_massa.py::test_estornos_orfaos [32mPASSED[0m[32m                 [ 37%][0m
+tests/test_gerador_massa.py::test_ids_de_estorno_sao_unicos [32mPASSED[0m[32m       [ 38%][0m
+tests/test_gerador_massa.py::test_cpf_gerado_e_valido [32mPASSED[0m[32m             [ 39%][0m
+tests/test_gerador_massa.py::test_cpf_com_digito_errado_tem_formato_certo [32mPASSED[0m[32m [ 40%][0m
+tests/test_gerador_massa.py::test_defeitos_de_transacao_tem_um_valor_por_dia [32mPASSED[0m[32m [ 40%][0m
+tests/test_gerador_massa.py::test_cargas_cobrem_meses_diferentes [32mPASSED[0m[32m  [ 41%][0m
+tests/test_gerador_massa.py::test_escala_multiplica_o_volume [32mPASSED[0m[32m      [ 42%][0m
+tests/test_gerador_massa.py::test_sortear_disjuntos_nao_repete_linha [32mPASSED[0m[32m [ 43%][0m
+tests/test_gold.py::test_views_sao_registradas [32mPASSED[0m[32m                    [ 44%][0m
+tests/test_gold.py::test_as_quatro_tabelas_foram_materializadas [32mPASSED[0m[33m   [ 45%][0m
+tests/test_gold.py::test_enriquecimento_nao_perde_nem_cria_transacao [32mPASSED[0m[33m [ 46%][0m
+tests/test_gold.py::test_toda_transacao_encontra_o_cartao [32mPASSED[0m[33m         [ 47%][0m
+tests/test_gold.py::test_cartao_orfao_deixa_conta_e_cliente_nulos [32mPASSED[0m[33m [ 48%][0m
+tests/test_gold.py::test_cadastro_com_restricao_e_marcado [32mPASSED[0m[33m         [ 49%][0m
+tests/test_gold.py::test_colunas_de_enriquecimento_presentes [32mPASSED[0m[33m      [ 50%][0m
+tests/test_gold.py::test_ano_mes_derivado_da_data_do_evento [32mPASSED[0m[33m       [ 50%][0m
+tests/test_gold.py::test_valor_liquido_exclui_estornos [32mPASSED[0m[33m            [ 51%][0m
+tests/test_gold.py::test_resumo_separa_bruto_e_liquido [32mPASSED[0m[33m            [ 52%][0m
+tests/test_gold.py::test_clientes_sem_estorno_tem_bruto_igual_ao_liquido [32mPASSED[0m[33m [ 53%][0m
+tests/test_gold.py::test_resumo_tem_uma_linha_por_cliente_e_mes [32mPASSED[0m[33m   [ 54%][0m
+tests/test_gold.py::test_contagem_do_resumo_bate_com_as_transacoes_que_tem_cliente [32mPASSED[0m[33m [ 55%][0m
+tests/test_gold.py::test_soma_do_resumo_bate_com_as_transacoes_que_tem_cliente [32mPASSED[0m[33m [ 56%][0m
+tests/test_gold.py::test_ticket_medio_usa_apenas_transacoes_efetivas [32mPASSED[0m[33m [ 57%][0m
+tests/test_gold.py::test_resumo_nao_tem_cliente_nulo [32mPASSED[0m[33m              [ 58%][0m
+tests/test_gold.py::test_ranking_por_valor_esta_ordenado [32mPASSED[0m[33m          [ 59%][0m
+tests/test_gold.py::test_ranking_por_quantidade_esta_ordenado [32mPASSED[0m[33m     [ 60%][0m
+tests/test_gold.py::test_dense_rank_nao_pula_posicao [32mPASSED[0m[33m              [ 60%][0m
+tests/test_gold.py::test_ranking_por_cidade_reinicia_em_cada_cidade [32mPASSED[0m[33m [ 61%][0m
+tests/test_gold.py::test_ranking_soma_a_mesma_quantidade_da_base [32mPASSED[0m[33m  [ 62%][0m
+tests/test_gold.py::test_ranking_agrupa_por_estabelecimento [32mPASSED[0m[33m       [ 63%][0m
+tests/test_gold.py::test_alertas_registra_rejeicoes_e_alertas [32mPASSED[0m[33m     [ 64%][0m
+tests/test_gold.py::test_rejeicoes_batem_com_a_quarentena [32mPASSED[0m[33m         [ 65%][0m
+tests/test_gold.py::test_alertas_registram_bandeira_invalida [32mPASSED[0m[33m      [ 66%][0m
+tests/test_gold.py::test_registro_com_alerta_nao_foi_rejeitado [32mPASSED[0m[33m    [ 67%][0m
+tests/test_gold.py::test_reconstruir_a_ouro_e_idempotente [32mPASSED[0m[33m         [ 68%][0m
+tests/test_gold.py::test_resumo_cobre_mais_de_um_mes [32mPASSED[0m[33m              [ 69%][0m
+tests/test_gold.py::test_consultas_analiticas_executam [32mPASSED[0m[33m            [ 70%][0m
+tests/test_gold.py::test_quartis_classificam_todos_os_clientes [32mPASSED[0m[33m    [ 70%][0m
+tests/test_silver.py::test_expressao_de_cpf_aceita_valido [32mPASSED[0m[33m         [ 71%][0m
+tests/test_silver.py::test_expressao_de_cpf_rejeita_digito_errado [32mPASSED[0m[33m [ 72%][0m
+tests/test_silver.py::test_expressao_de_cpf_rejeita_digitos_repetidos [32mPASSED[0m[33m [ 73%][0m
+tests/test_silver.py::test_expressao_de_cpf_rejeita_formato_invalido [32mPASSED[0m[33m [ 74%][0m
+tests/test_silver.py::test_expandir_substitui_apenas_funcoes_conhecidas [32mPASSED[0m[33m [ 75%][0m
+tests/test_silver.py::test_dedup_mantem_a_versao_mais_recente [32mPASSED[0m[33m     [ 76%][0m
+tests/test_silver.py::test_dedup_desempata_por_hash_quando_a_versao_empata [32mPASSED[0m[33m [ 77%][0m
+tests/test_silver.py::test_dedup_preserva_chaves_distintas [32mPASSED[0m[33m        [ 78%][0m
+tests/test_silver.py::test_clientes_rejeitados_por_cpf [32mPASSED[0m[33m            [ 79%][0m
+tests/test_silver.py::test_uma_linha_pode_acumular_varios_motivos [32mPASSED[0m[33m [ 80%][0m
+tests/test_silver.py::test_contas_rejeitadas [32mPASSED[0m[33m                      [ 80%][0m
+tests/test_silver.py::test_cartoes_rejeitados [32mPASSED[0m[33m                     [ 81%][0m
+tests/test_silver.py::test_transacoes_rejeitadas [32mPASSED[0m[33m                  [ 82%][0m
+tests/test_silver.py::test_estornos_orfaos_rejeitados [32mPASSED[0m[33m             [ 83%][0m
+tests/test_silver.py::test_rejeicao_nao_cascateia [32mPASSED[0m[33m                 [ 84%][0m
+tests/test_silver.py::test_silver_nao_tem_chave_duplicada [32mPASSED[0m[33m         [ 85%][0m
+tests/test_silver.py::test_cliente_duplicado_mantem_a_versao_valida_mais_recente [32mPASSED[0m[33m [ 86%][0m
+tests/test_silver.py::test_transacoes_duplicadas_foram_removidas [32mPASSED[0m[33m  [ 87%][0m
+tests/test_silver.py::test_transacoes_estornadas_sao_marcadas [32mPASSED[0m[33m     [ 88%][0m
+tests/test_silver.py::test_valor_liquido_zera_nas_estornadas [32mPASSED[0m[33m      [ 89%][0m
+tests/test_silver.py::test_estorno_orfao_nao_marca_nenhuma_transacao [32mPASSED[0m[33m [ 90%][0m
+tests/test_silver.py::test_nenhuma_linha_e_criada_do_nada [32mPASSED[0m[33m         [ 90%][0m
+tests/test_silver.py::test_merge_e_idempotente [32mPASSED[0m[33m                    [ 91%][0m
+tests/test_silver.py::test_silver_preserva_os_metadados_da_bronze [32mPASSED[0m[33m [ 92%][0m
+tests/test_silver.py::test_tipagem_foi_aplicada [32mPASSED[0m[33m                   [ 93%][0m
+tests/test_silver.py::test_quarentena_preserva_o_valor_original [32mPASSED[0m[33m   [ 94%][0m
+tests/test_smoke.py::test_spark_session_disponivel [32mPASSED[0m[33m                [ 95%][0m
+tests/test_smoke.py::test_timezone_fixada_em_utc [32mPASSED[0m[33m                  [ 96%][0m
+tests/test_smoke.py::test_delta_habilitado_na_sessao_local [33mSKIPPED[0m (no
+Databricks o Delta e nativo do runtime, nao carregado por extensao)[33m      [ 97%][0m
+tests/test_smoke.py::test_escreve_e_le_tabela_delta [32mPASSED[0m[33m               [ 98%][0m
+tests/test_smoke.py::test_resolve_target_monta_caminho_da_camada [32mPASSED[0m[33m  [ 99%][0m
+tests/test_smoke.py::test_resolve_target_rejeita_camada_invalida [32mPASSED[0m[33m  [100%][0m
+
+[33m=============================== warnings summary ===============================[0m
+tests/test_gold.py: 10 warnings
+tests/test_silver.py: 14 warnings
+  /databricks/spark/python/pyspark/sql/connect/client/core.py:1151: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+    if LooseVersion(pa.__version__) >= LooseVersion("13.0.0"):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+[33m=========== [32m109 passed[0m, [33m[1m1 skipped[0m, [33m[1m24 warnings[0m[33m in 438.97s (0:07:18)[0m[33m ============[0m

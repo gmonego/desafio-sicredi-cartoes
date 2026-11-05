@@ -1,0 +1,332 @@
+==============================================================================
+CONSULTA: crescimento_mensal_clientes.sql
+LINHAS RETORNADAS: 70
+==============================================================================
+
+with movimento_mensal as (
+    select
+        id_cliente,
+        nome_cliente,
+        ano_mes,
+        valor_liquido,
+        qtd_transacoes
+    from gold_resumo_cliente_mes
+),
+
+com_mes_anterior as (
+    select
+        id_cliente,
+        nome_cliente,
+        ano_mes,
+        valor_liquido,
+        qtd_transacoes,
+        lag(valor_liquido) over (
+            partition by id_cliente
+            order by ano_mes
+        )                                           as valor_mes_anterior,
+        lag(ano_mes) over (
+            partition by id_cliente
+            order by ano_mes
+        )                                           as mes_anterior
+    from movimento_mensal
+)
+
+select
+    id_cliente,
+    nome_cliente,
+    mes_anterior,
+    ano_mes                                         as mes_atual,
+    valor_mes_anterior,
+    valor_liquido                                   as valor_mes_atual,
+    valor_liquido - valor_mes_anterior              as variacao_absoluta,
+    round(
+        (valor_liquido - valor_mes_anterior) / valor_mes_anterior * 100,
+        2
+    )                                               as crescimento_percentual,
+    qtd_transacoes
+from com_mes_anterior
+where valor_mes_anterior is not null
+  and valor_mes_anterior > 0
+  and (valor_liquido - valor_mes_anterior) / valor_mes_anterior > 0.50
+order by crescimento_percentual desc
+
+------------------------------------------------------------------------------
+RESULTADO (primeiras 20 linhas)
+------------------------------------------------------------------------------
++----------+-----------------+------------+---------+------------------+---------------+-----------------+----------------------+--------------+
+|id_cliente|     nome_cliente|mes_anterior|mes_atual|valor_mes_anterior|valor_mes_atual|variacao_absoluta|crescimento_percentual|qtd_transacoes|
++----------+-----------------+------------+---------+------------------+---------------+-----------------+----------------------+--------------+
+| CLI000132|     Olivia Silva|     2026-08|  2026-09|            616.07|        7174.07|          6558.00|               1064.49|             5|
+| CLI000098|  Renata Ferreira|     2026-09|  2026-10|            747.82|        7495.90|          6748.08|                902.37|             3|
+| CLI000023|     Felipe Costa|     2026-08|  2026-09|            783.12|        7248.32|          6465.20|                825.57|             6|
+| CLI000111|     Lucas Santos|     2026-08|  2026-09|           1556.87|       13818.41|         12261.54|                787.58|             8|
+| CLI000289|     Renata Souza|     2026-08|  2026-09|           3027.95|       22282.78|         19254.83|                635.90|            12|
+| CLI000153|    Isabel Santos|     2026-08|  2026-09|           3959.49|       23135.65|         19176.16|                484.31|            14|
+| CLI000227|    Gabriela Lima|     2026-08|  2026-09|           5271.70|       26446.05|         21174.35|                401.66|            13|
+| CLI000168|      Vitor Silva|     2026-08|  2026-09|           1323.71|        5541.75|          4218.04|                318.65|             4|
+| CLI000264|Henrique Ferreira|     2026-08|  2026-09|          10457.30|       43198.84|         32741.54|                313.10|            18|
+| CLI000005|     Felipe Costa|     2026-08|  2026-09|           4324.50|       15599.56|         11275.06|                260.73|            11|
+| CLI000084|     Nelson Silva|     2026-08|  2026-09|           1727.62|        6215.89|          4488.27|                259.79|             3|
+| CLI000201|     Marina Souza|     2026-08|  2026-09|           8749.30|       28878.92|         20129.62|                230.07|            15|
+| CLI000092|      Lucas Silva|     2026-08|  2026-09|           2404.53|        7921.97|          5517.44|                229.46|             5|
+| CLI000237| Tatiana Oliveira|     2026-08|  2026-09|           7729.80|       25052.56|         17322.76|                224.10|            13|
+| CLI000186|        Joao Lima|     2026-08|  2026-09|           4427.79|       13650.56|          9222.77|                208.29|             6|
+| CLI000043|     Diego Santos|     2026-08|  2026-09|           5835.89|       17611.64|         11775.75|                201.78|             6|
+| CLI000254|     Karina Silva|     2026-08|  2026-09|           4293.09|       12552.38|          8259.29|                192.39|             9|
+| CLI000075|  Gabriela Santos|     2026-08|  2026-09|           6537.31|       19109.60|         12572.29|                192.32|            13|
+| CLI000225|     Joao Pereira|     2026-09|  2026-10|           4277.01|       12346.46|          8069.45|                188.67|             8|
+| CLI000128|     Felipe Silva|     2026-08|  2026-09|           7276.09|       20859.19|         13583.10|                186.68|            15|
++----------+-----------------+------------+---------+------------------+---------------+-----------------+----------------------+--------------+
+only showing top 20 rows
+
+
+
+==============================================================================
+CONSULTA: evolucao_mensal_cliente.sql
+LINHAS RETORNADAS: 463
+==============================================================================
+
+with evolucao as (
+    select
+        id_cliente,
+        nome_cliente,
+        ano_mes,
+        valor_liquido,
+        qtd_transacoes,
+        ticket_medio,
+
+        lag(valor_liquido)  over (partition by id_cliente order by ano_mes)
+            as valor_mes_anterior,
+        lead(valor_liquido) over (partition by id_cliente order by ano_mes)
+            as valor_mes_seguinte,
+
+        row_number() over (partition by id_cliente order by ano_mes)
+            as numero_do_mes
+    from gold_resumo_cliente_mes
+)
+
+select
+    id_cliente,
+    nome_cliente,
+    ano_mes,
+    numero_do_mes,
+    valor_mes_anterior,
+    valor_liquido                       as valor_mes_atual,
+    valor_mes_seguinte,
+    qtd_transacoes,
+    ticket_medio,
+
+    case
+        when valor_mes_anterior is null then 'primeiro mes'
+        when valor_liquido > valor_mes_anterior then 'crescimento'
+        when valor_liquido < valor_mes_anterior then 'retracao'
+        else 'estavel'
+    end                                 as tendencia,
+
+    case
+        when valor_mes_anterior is null OR valor_mes_anterior = 0 then null
+        else round(
+            (valor_liquido - valor_mes_anterior) / valor_mes_anterior * 100, 2
+        )
+    end                                 as variacao_percentual
+
+from evolucao
+order by id_cliente, ano_mes
+
+------------------------------------------------------------------------------
+RESULTADO (primeiras 20 linhas)
+------------------------------------------------------------------------------
++----------+---------------+-------+-------------+------------------+---------------+------------------+--------------+------------+------------+-------------------+
+|id_cliente|   nome_cliente|ano_mes|numero_do_mes|valor_mes_anterior|valor_mes_atual|valor_mes_seguinte|qtd_transacoes|ticket_medio|   tendencia|variacao_percentual|
++----------+---------------+-------+-------------+------------------+---------------+------------------+--------------+------------+------------+-------------------+
+| CLI000005|   Felipe Costa|2026-08|            1|              NULL|        4324.50|          15599.56|             3|     1441.50|primeiro mes|               NULL|
+| CLI000005|   Felipe Costa|2026-09|            2|           4324.50|       15599.56|           6738.35|            11|     1733.28| crescimento|             260.73|
+| CLI000005|   Felipe Costa|2026-10|            3|          15599.56|        6738.35|              NULL|             2|     3369.18|    retracao|             -56.80|
+| CLI000009|    Paulo Silva|2026-08|            1|              NULL|       13107.17|          30015.02|            10|     1310.72|primeiro mes|               NULL|
+| CLI000009|    Paulo Silva|2026-09|            2|          13107.17|       30015.02|          17031.97|            18|     1667.50| crescimento|             129.00|
+| CLI000009|    Paulo Silva|2026-10|            3|          30015.02|       17031.97|              NULL|             7|     2433.14|    retracao|             -43.26|
+| CLI000010|  Vitor Ribeiro|2026-08|            1|              NULL|       15929.69|          20014.16|             9|     1769.97|primeiro mes|               NULL|
+| CLI000010|  Vitor Ribeiro|2026-09|            2|          15929.69|       20014.16|          10654.91|            13|     1539.55| crescimento|              25.64|
+| CLI000010|  Vitor Ribeiro|2026-10|            3|          20014.16|       10654.91|              NULL|             9|     1331.86|    retracao|             -46.76|
+| CLI000012| Sergio Pereira|2026-08|            1|              NULL|       12111.83|          14617.10|             6|     2018.64|primeiro mes|               NULL|
+| CLI000012| Sergio Pereira|2026-09|            2|          12111.83|       14617.10|          14158.83|            10|     1461.71| crescimento|              20.68|
+| CLI000012| Sergio Pereira|2026-10|            3|          14617.10|       14158.83|              NULL|             8|     1769.85|    retracao|              -3.14|
+| CLI000015|Sergio Ferreira|2026-08|            1|              NULL|       17031.88|          37330.68|             8|     2128.99|primeiro mes|               NULL|
+| CLI000015|Sergio Ferreira|2026-09|            2|          17031.88|       37330.68|          22258.66|            18|     2073.93| crescimento|             119.18|
+| CLI000015|Sergio Ferreira|2026-10|            3|          37330.68|       22258.66|              NULL|            12|     1854.89|    retracao|             -40.37|
+| CLI000020|  Tatiana Costa|2026-08|            1|              NULL|        9431.46|           7330.42|             6|     1571.91|primeiro mes|               NULL|
+| CLI000020|  Tatiana Costa|2026-09|            2|           9431.46|        7330.42|           4557.13|             3|     2443.47|    retracao|             -22.28|
+| CLI000020|  Tatiana Costa|2026-10|            3|           7330.42|        4557.13|              NULL|             3|     1519.04|    retracao|             -37.83|
+| CLI000021|   Olivia Gomes|2026-08|            1|              NULL|       22866.47|          15183.17|            11|     2078.77|primeiro mes|               NULL|
+| CLI000021|   Olivia Gomes|2026-09|            2|          22866.47|       15183.17|          15453.94|            10|     1687.02|    retracao|             -33.60|
++----------+---------------+-------+-------------+------------------+---------------+------------------+--------------+------------+------------+-------------------+
+only showing top 20 rows
+
+
+
+==============================================================================
+CONSULTA: quartis_clientes.sql
+LINHAS RETORNADAS: 156
+==============================================================================
+
+with total_por_cliente as (
+    select
+        id_cliente,
+        nome_cliente,
+        sum(valor_liquido)      as valor_total,
+        sum(qtd_transacoes)     as qtd_transacoes,
+        sum(valor_estornado)    as valor_estornado,
+        count(distinct ano_mes) as meses_ativos
+    from gold_resumo_cliente_mes
+    group by id_cliente, nome_cliente
+),
+
+classificado as (
+    select
+        id_cliente,
+        nome_cliente,
+        valor_total,
+        qtd_transacoes,
+        valor_estornado,
+        meses_ativos,
+        round(valor_total / qtd_transacoes, 2)          as ticket_medio,
+        ntile(4) over (order by valor_total desc)       as quartil,
+        dense_rank() over (order by valor_total desc)   as posicao
+    from total_por_cliente
+)
+
+select
+    id_cliente,
+    nome_cliente,
+    quartil,
+    case quartil
+        when 1 then 'Q1 - maior movimentacao'
+        when 2 then 'Q2 - movimentacao acima da mediana'
+        when 3 then 'Q3 - movimentacao abaixo da mediana'
+        when 4 then 'Q4 - menor movimentacao'
+    end                             as faixa,
+    posicao,
+    valor_total,
+    qtd_transacoes,
+    ticket_medio,
+    valor_estornado,
+    meses_ativos
+from classificado
+order by quartil, posicao
+
+------------------------------------------------------------------------------
+RESULTADO (primeiras 20 linhas)
+------------------------------------------------------------------------------
++----------+----------------+-------+-----------------------+-------+-----------+--------------+------------+---------------+------------+
+|id_cliente|    nome_cliente|quartil|                  faixa|posicao|valor_total|qtd_transacoes|ticket_medio|valor_estornado|meses_ativos|
++----------+----------------+-------+-----------------------+-------+-----------+--------------+------------+---------------+------------+
+| CLI000138|    Renata Souza|      1|Q1 - maior movimentacao|      1|  188694.21|           108|     1747.17|        4039.44|           3|
+| CLI000076|      Joao Silva|      1|Q1 - maior movimentacao|      2|  160162.14|            91|     1760.02|          26.79|           3|
+| CLI000164|    Karina Silva|      1|Q1 - maior movimentacao|      3|  159877.59|            99|     1614.93|       10041.03|           3|
+| CLI000205|  Elisa Ferreira|      1|Q1 - maior movimentacao|      4|  152469.93|            88|     1732.61|       12717.18|           3|
+| CLI000163| Tatiana Pereira|      1|Q1 - maior movimentacao|      5|  151461.93|            96|     1577.73|        4625.49|           3|
+| CLI000206| Sergio Ferreira|      1|Q1 - maior movimentacao|      6|  150815.88|            95|     1587.54|       12535.46|           3|
+| CLI000276|     Diego Alves|      1|Q1 - maior movimentacao|      7|  149042.26|            88|     1693.66|        4054.35|           3|
+| CLI000102|     Lucas Costa|      1|Q1 - maior movimentacao|      8|  145327.04|            79|     1839.58|           0.00|           3|
+| CLI000024|     Lucas Souza|      1|Q1 - maior movimentacao|      9|  137200.25|            77|     1781.82|         802.97|           3|
+| CLI000244|Nelson Rodrigues|      1|Q1 - maior movimentacao|     10|  136293.70|            67|     2034.23|          34.89|           3|
+| CLI000278|      Diego Lima|      1|Q1 - maior movimentacao|     11|  135811.13|            79|     1719.13|        6047.07|           3|
+| CLI000247|    Sergio Silva|      1|Q1 - maior movimentacao|     12|  135061.85|            81|     1667.43|        5846.88|           3|
+| CLI000070|   Sergio Santos|      1|Q1 - maior movimentacao|     13|  133315.34|            76|     1754.15|         228.07|           3|
+| CLI000194|  Gabriela Gomes|      1|Q1 - maior movimentacao|     14|  127390.72|            88|     1447.62|       11166.88|           3|
+| CLI000287| Gabriela Santos|      1|Q1 - maior movimentacao|     15|  125292.76|            68|     1842.54|        4888.66|           3|
+| CLI000127| Olivia Oliveira|      1|Q1 - maior movimentacao|     16|  123903.30|            71|     1745.12|           0.00|           3|
+| CLI000158|     Nelson Lima|      1|Q1 - maior movimentacao|     17|  121292.80|            64|     1895.20|        2557.17|           3|
+| CLI000217|  Tatiana Santos|      1|Q1 - maior movimentacao|     18|  119239.48|            70|     1703.42|        2232.42|           3|
+| CLI000089|      Joao Gomes|      1|Q1 - maior movimentacao|     19|  115212.49|            68|     1694.30|           0.00|           3|
+| CLI000064|     Renata Lima|      1|Q1 - maior movimentacao|     20|  112553.77|            64|     1758.65|           0.00|           3|
++----------+----------------+-------+-----------------------+-------+-----------+--------------+------------+---------------+------------+
+only showing top 20 rows
+
+
+
+==============================================================================
+CONSULTA: ranking_estabelecimentos_por_cidade.sql
+LINHAS RETORNADAS: 24
+==============================================================================
+
+with por_cidade as (
+    select
+        cidade_estabelecimento,
+        nome_estabelecimento,
+        mcc,
+        sum(valor_liquido)                          as valor_liquido,
+        count(*)                                    as qtd_transacoes,
+        count(distinct id_cliente)                  as qtd_clientes,
+        sum(case when estornada then 1 else 0 end)  as qtd_estornadas
+    from gold_transacoes_cartao
+    group by cidade_estabelecimento, nome_estabelecimento, mcc
+),
+
+ranqueado as (
+    select
+        cidade_estabelecimento,
+        nome_estabelecimento,
+        mcc,
+        valor_liquido,
+        qtd_transacoes,
+        qtd_clientes,
+        qtd_estornadas,
+        row_number() over (
+            partition by cidade_estabelecimento
+            order by valor_liquido desc, nome_estabelecimento
+        )                                           as posicao,
+        dense_rank() over (
+            partition by cidade_estabelecimento
+            order by valor_liquido desc
+        )                                           as posicao_com_empate,
+        sum(valor_liquido) over (
+            partition by cidade_estabelecimento
+        )                                           as valor_total_cidade
+    from por_cidade
+)
+
+select
+    cidade_estabelecimento,
+    posicao,
+    posicao_com_empate,
+    nome_estabelecimento,
+    mcc,
+    valor_liquido,
+    round(valor_liquido / valor_total_cidade * 100, 2) as participacao_na_cidade,
+    qtd_transacoes,
+    qtd_clientes,
+    qtd_estornadas
+from ranqueado
+where posicao <= 3
+order by cidade_estabelecimento, posicao
+
+------------------------------------------------------------------------------
+RESULTADO (primeiras 20 linhas)
+------------------------------------------------------------------------------
++----------------------+-------+------------------+----------------------+----+-------------+----------------------+--------------+------------+--------------+
+|cidade_estabelecimento|posicao|posicao_com_empate|  nome_estabelecimento| mcc|valor_liquido|participacao_na_cidade|qtd_transacoes|qtd_clientes|qtd_estornadas|
++----------------------+-------+------------------+----------------------+----+-------------+----------------------+--------------+------------+--------------+
+|        Belo Horizonte|      1|                 1|      Eletronicos Tech|5732|    146735.88|                 11.93|            78|          57|             1|
+|        Belo Horizonte|      2|                 2|  Loja de Conveniencia|5999|    141119.94|                 11.48|            86|          56|             5|
+|        Belo Horizonte|      3|                 3|       Casa de Apostas|7995|    140810.37|                 11.45|            77|          53|             4|
+|              Campinas|      1|                 1|       Casa de Apostas|7995|    133708.52|                 11.70|            80|          57|             6|
+|              Campinas|      2|                 2|     Mercado Bom Preco|5411|    121761.16|                 10.66|            61|          43|             2|
+|              Campinas|      3|                 3|      Cantina Italiana|5812|    118810.47|                 10.40|            68|          50|             2|
+|                Canoas|      1|                 1|      Eletronicos Tech|5732|    184361.31|                 15.04|            87|          65|             2|
+|                Canoas|      2|                 2|     Transporte Urbano|4121|    137109.85|                 11.19|            77|          55|             0|
+|                Canoas|      3|                 3|     Mercado Bom Preco|5411|    130977.36|                 10.69|            80|          55|             1|
+|         Caxias do Sul|      1|                 1|Restaurante da Esquina|5812|    137712.03|                 11.43|            73|          56|             2|
+|         Caxias do Sul|      2|                 2|      Farmacia Popular|5912|    132933.77|                 11.04|            80|          50|             1|
+|         Caxias do Sul|      3|                 3|       Casa de Apostas|7995|    130457.56|                 10.83|            74|          59|             2|
+|              Curitiba|      1|                 1|  Supermercado Central|5411|    141281.17|                 11.78|            85|          56|             3|
+|              Curitiba|      2|                 2|     Transporte Urbano|4121|    141172.18|                 11.77|            78|          53|             1|
+|              Curitiba|      3|                 3|  Loja de Conveniencia|5999|    133211.42|                 11.10|            75|          50|             2|
+|         Florianopolis|      1|                 1|       Casa de Apostas|7995|    152612.18|                 11.73|            80|          52|             3|
+|         Florianopolis|      2|                 2|  Supermercado Central|5411|    143993.86|                 11.07|            86|          61|             4|
+|         Florianopolis|      3|                 3|      Eletronicos Tech|5732|    134814.91|                 10.36|            74|          51|             3|
+|          Porto Alegre|      1|                 1|     Transporte Urbano|4121|    133277.71|                 11.49|            75|          51|             1|
+|          Porto Alegre|      2|                 2|      Farmacia Popular|5912|    126850.21|                 10.93|            76|          53|             1|
++----------------------+-------+------------------+----------------------+----+-------------+----------------------+--------------+------------+--------------+
+only showing top 20 rows
+
