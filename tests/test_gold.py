@@ -301,16 +301,16 @@ def test_rejeicoes_batem_com_a_quarentena(spark, pipeline):
     assert quantidade("contas", "fk_invalida_id_cliente") == (
         DEFEITOS["contas_sem_cliente"]
     )
-    assert quantidade("contas", "status_conta_valido") == (
+    assert quantidade("contas", "status_conta_fora_do_dominio") == (
         DEFEITOS["contas_status_invalido"]
     )
     assert quantidade("cartoes", "fk_invalida_id_conta") == (
         DEFEITOS["cartoes_sem_conta"]
     )
-    assert quantidade("transacoes", "valor_positivo") == sum(
+    assert quantidade("transacoes", "valor_nao_positivo") == sum(
         DEFEITOS_TRANSACAO["valor_negativo"]
     )
-    assert quantidade("transacoes", "data_transacao_valida") == sum(
+    assert quantidade("transacoes", "data_transacao_futura") == sum(
         DEFEITOS_TRANSACAO["data_invalida"]
     )
     assert quantidade("estornos", "fk_invalida_id_transacao") == (
@@ -323,7 +323,7 @@ def test_alertas_registram_bandeira_invalida(spark, pipeline):
     linha = df.filter(
         (F.col("entidade") == "cartoes")
         & (F.col("tipo") == "alerta")
-        & (F.col("motivo") == "bandeira_valida")
+        & (F.col("motivo") == "bandeira_fora_do_dominio")
     ).collect()
 
     assert linha, "alerta de bandeira invalida nao registrado"

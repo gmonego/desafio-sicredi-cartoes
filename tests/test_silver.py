@@ -151,8 +151,8 @@ def test_clientes_rejeitados_por_cpf(spark, pipeline):
     esperado_digito = (
         DEFEITOS["clientes_cpf_invalido"] + DEFEITOS["clientes_cpf_malformado"]
     )
-    assert contagem["cpf_digito_verificador_valido"] == esperado_digito
-    assert contagem["cpf_formato_valido"] == DEFEITOS["clientes_cpf_malformado"]
+    assert contagem["cpf_digito_verificador_invalido"] == esperado_digito
+    assert contagem["cpf_formato_invalido"] == DEFEITOS["clientes_cpf_malformado"]
 
 
 def test_uma_linha_pode_acumular_varios_motivos(spark, pipeline):
@@ -166,7 +166,7 @@ def test_uma_linha_pode_acumular_varios_motivos(spark, pipeline):
 def test_contas_rejeitadas(spark, pipeline):
     contagem = motivos(spark, "contas")
     assert contagem["fk_invalida_id_cliente"] == DEFEITOS["contas_sem_cliente"]
-    assert contagem["status_conta_valido"] == DEFEITOS["contas_status_invalido"]
+    assert contagem["status_conta_fora_do_dominio"] == DEFEITOS["contas_status_invalido"]
 
 
 def test_cartoes_rejeitados(spark, pipeline):
@@ -176,8 +176,8 @@ def test_cartoes_rejeitados(spark, pipeline):
 
 def test_transacoes_rejeitadas(spark, pipeline):
     contagem = motivos(spark, "transacoes")
-    assert contagem["valor_positivo"] == total("valor_negativo")
-    assert contagem["data_transacao_valida"] == total("data_invalida")
+    assert contagem["valor_nao_positivo"] == total("valor_negativo")
+    assert contagem["data_transacao_futura"] == total("data_invalida")
     assert contagem["fk_invalida_id_cartao"] == total("sem_cartao")
 
 
@@ -352,8 +352,8 @@ def test_quarentena_preserva_o_valor_original(spark, pipeline):
     assert "cpf_original" in df.columns
 
     com_digito_errado = df.filter(
-        F.array_contains("motivos_erro", "cpf_digito_verificador_valido")
-        & ~F.array_contains("motivos_erro", "cpf_formato_valido")
+        F.array_contains("motivos_erro", "cpf_digito_verificador_invalido")
+        & ~F.array_contains("motivos_erro", "cpf_formato_invalido")
     )
     assert com_digito_errado.count() == DEFEITOS["clientes_cpf_invalido"]
     assert com_digito_errado.filter(F.col("cpf_original").isNull()).count() == 0
